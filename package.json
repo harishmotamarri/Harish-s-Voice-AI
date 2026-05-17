@@ -1,0 +1,27 @@
+{
+  "name": "harish-voice-ai",
+  "version": "1.0.0",
+  "description": "Harish Voice AI Assistant — Telugu+English conversational AI",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "db:init": "node src/db/init.js",
+    "verify": "node tests/verify-setup.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.4",
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "elevenlabs": "^0.17.0",
+    "express": "^4.19.2",
+    "form-data": "^4.0.0",
+    "groq-sdk": "^1.2.0",
+    "multer": "^1.4.5-lts.1",
+    "twilio": "^5.2.3",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
