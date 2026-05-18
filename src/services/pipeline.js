@@ -50,20 +50,15 @@ async function process({ callSid, speechResult, recordingUrl }) {
   const history = await db.getConversationHistory(callSid);
   const { reply: replyText, shouldHangup } = await llm.respond(history);
 
-  // ── 4. Save assistant reply ───────────────────────────────────────────────
-  await db.addTranscript(callSid, 'assistant', replyText);
+  // Save transcript + generate TTS in parallel
+  const [audioUrl] = await Promise.all([
+    tts.synthesize(replyText, callSid).catch(err => {
+      logger.warn('TTS failed', { callSid, error: err.message });
+      return null;
+    }),
+    db.addTranscript(callSid, 'assistant', replyText)
+  ]);
 
-  // ── 5. Text-to-Speech ────────────────────────────────────────────────────
-  let audioUrl = null;
-  try {
-
-    audioUrl = await tts.synthesize(replyText, callSid);
-  } catch (err) {
-    logger.warn('TTS failed, falling back to Twilio Say', {
-      callSid,
-      error: err.message
-    });
-  }
 
   logger.info('Pipeline complete', {
     callSid,

@@ -53,11 +53,23 @@ router.post('/incoming', validateTwilio, async (req, res) => {
     // 2. Generate greeting TwiML
     //    We use <Gather> with input="speech" so Twilio records the caller
     //    and POSTs the transcript to /voice/gather.
-    const greeting = buildGatherTwiML(
-      twiml,
-      CallSid,
-      'Haa! Meeru call chesaaru. Cheppandi, em kavali?'  // will be replaced by TTS audio in Step 5
-    );
+    // Generate gTTS for greeting too
+    const { synthesize } = require('../services/tts');
+    try {
+      const greetingAudio = await synthesize('Hello, cheppu ra, enduku call chesav?', CallSid);
+      twiml.play(greetingAudio);
+      twiml.gather({
+        input: 'speech',
+        action: `${process.env.BASE_URL}/voice/gather`,
+        method: 'POST',
+        language: 'te-IN',
+        speechTimeout: 'auto',
+        speechModel: 'phone_call',
+        profanityFilter: false
+      });
+    } catch (e) {
+      buildGatherTwiML(twiml, CallSid, 'Hello, cheppu ra, enduku call chesav?');
+    }
 
     logger.debug('TwiML generated for greeting', { CallSid });
     res.type('text/xml').send(twiml.toString());
@@ -113,7 +125,12 @@ router.post('/gather', validateTwilio, async (req, res) => {
     });
 
     if (shouldHangup) {
-      twiml.say({ voice: 'Polly.Aditi' }, replyText);
+      if (audioUrl) {
+        twiml.play(audioUrl);
+      } else {
+        twiml.say({ language: 'en-IN' }, replyText);
+      }
+      twiml.pause({ length: 1 }); // small pause so audio finishes
       twiml.hangup();
       return res.type('text/xml').send(twiml.toString());
     }
@@ -122,16 +139,18 @@ router.post('/gather', validateTwilio, async (req, res) => {
 
     // 3. Build response TwiML
     if (audioUrl) {
-      // Step 5: play ElevenLabs cloned-voice audio
-      const gather = twiml.gather({
+      // Play gTTS audio FIRST, then listen
+      twiml.play(audioUrl);
+      twiml.gather({
         input: 'speech',
         action: `${process.env.BASE_URL}/voice/gather`,
         method: 'POST',
         language: 'te-IN',
         speechTimeout: 'auto',
-        speechModel: 'phone_call'
+        speechModel: 'phone_call',
+        profanityFilter: false,
+        enhanced: true
       });
-      gather.play(audioUrl);
     } else {
       // Steps 2–4: fallback to Twilio's built-in TTS
       buildGatherTwiML(twiml, CallSid, replyText);
@@ -185,17 +204,10 @@ function buildGatherTwiML(twiml, callSid, text) {
   });
 
   // Twilio built-in TTS (replaced by ElevenLabs audio in Step 5)
-  gather.say(
-    {
-      voice: 'Polly.Aditi',      // Indian English — closest available
-      language: 'hi-IN'            // Hindi EN is clearest for Twilio free tier
-    },
-    text
-  );
+  gather.say({ language: 'te-IN' }, text);
 
-  // If caller doesn't speak, re-prompt once then hang up
-  twiml.say({ voice: 'Polly.Aditi' }, 'Meeru em annaaru vinipinchaledu. Bye!');
-  twiml.hangup();
+  // If caller doesn't speak, pause and wait for input
+  twiml.pause({ length: 2 });
 
   return gather;
 }
