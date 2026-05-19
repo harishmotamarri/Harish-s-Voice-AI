@@ -42,13 +42,14 @@ app.use((err, req, res, _next) => {
   logger.error('Unhandled error', { path: req.path, error: err.message });
   res.status(500).json({ error: 'Internal server error' });
 });
-
+const { warmCache } = require('./services/tts');
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   logger.info(`🚀  Harish Voice AI started on port ${PORT}`);
   logger.info(`    Health: http://localhost:${PORT}/health`);
   logger.info(`    DB:     Supabase`);
   logger.info(`    Env:    ${process.env.NODE_ENV || 'development'}`);
+  const { warmCache } = require('./services/tts');
 });
 
 module.exports = app;
