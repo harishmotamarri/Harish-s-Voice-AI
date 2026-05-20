@@ -1992,6 +1992,59 @@
       }, delay);
     }
 
+      async function handleDemoSilence() {
+        if (!demoCallSid || demoEnding || demoProcessingSpeech) return;
+        demoProcessingSpeech = true;
+        document.getElementById('waveform').classList.remove('speaking');
+        document.getElementById('callStatusText').textContent = 'Thinking...';
+        document.getElementById('callStatusText').className = 'call-status-text ringing';
+
+        try {
+        const response = await fetch(`${BASE}/web/process`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ callSid: demoCallSid, silent: true })
+        });
+        const data = await response.json();
+
+        if (data.shouldHangup) {
+           demoEnding = true;
+           playDemoEndingAudio(data.audioUrl);
+           return;
+        }
+
+        if (data.audioUrl) {
+          if (demoAudioElement) demoAudioElement.pause();
+          demoAudioElement = new Audio(data.audioUrl);
+          document.getElementById('waveform').classList.add('speaking');
+          document.getElementById('callStatusText').textContent = 'Harish is speaking...';
+
+          const handleSilenceReplyEnded = () => {
+            document.getElementById('waveform').classList.remove('speaking');
+            demoProcessingSpeech = false;
+            if (document.getElementById('callTimer').classList.contains('active')) {
+               scheduleDemoListening('Listening... Speak now!');
+            }
+          };
+
+          demoAudioElement.onended = handleSilenceReplyEnded;
+          demoAudioElement.onerror = () => {
+            handleSilenceReplyEnded();
+          };
+
+          demoAudioElement.play().catch(() => {
+            handleSilenceReplyEnded();
+          });
+        } else {
+          demoProcessingSpeech = false;
+          scheduleDemoListening('Listening... Speak now!');
+        }
+        } catch {
+          demoProcessingSpeech = false;
+          scheduleDemoListening('Listening... Speak now!');
+        }
+      }
+
   async function startWebDemo() {
     // Check if browser supports SpeechRecognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2077,7 +2130,7 @@
             showToast('No microphone found', 'Check your mic input and try again.', 'error', 6000);
             stopWebDemo();
         } else if (e.error === 'no-speech') {
-            document.getElementById('callStatusText').textContent = 'Listening... Speak now!';
+          handleDemoSilence();
         }
     };
 
@@ -2092,7 +2145,7 @@
       }
       text = text.trim();
       if (!text) {
-        scheduleDemoListening('Listening... Speak again!');
+        handleDemoSilence();
         return;
       }
       demoProcessingSpeech = true;

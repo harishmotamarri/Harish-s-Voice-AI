@@ -56,15 +56,16 @@ app.post('/web/start', async (req, res) => {
 
 app.post('/web/process', async (req, res) => {
   try {
-    const { text, callSid } = req.body;
-    if (!text) return res.status(400).json({ error: 'text is required' });
+    const { text, callSid, silent } = req.body;
+    if (!silent && !text) return res.status(400).json({ error: 'text is required' });
     const sid = callSid || 'web_demo_' + Date.now();
     await db.updateCallStatus(sid, 'in-progress');
 
     const result = await pipeline.process({
       callSid: sid,
-      speechResult: text,
-      recordingUrl: null
+      speechResult: text || '',
+      recordingUrl: null,
+      silent: !!silent
     });
 
     res.json({

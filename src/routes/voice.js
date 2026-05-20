@@ -105,19 +105,13 @@ router.post('/gather', validateTwilio, async (req, res) => {
   if (!SpeechResult && !RecordingUrl) {
     logger.warn('No speech input, asking follow-up', { CallSid });
 
-    const silenceReplies = [
-      'enti ra, em cheppav, vinipiyyaledhu?',
-      'hello? unnava ra?',
-      'enti ra, signal ok na ni daggara, vinipistunda?',
-      'em ra, matladu ra',
-      'enti ra silent ga unnav?'
-    ];
-
-    const randomReply = silenceReplies[Math.floor(Math.random() * silenceReplies.length)];
-
     try {
-      const { synthesize } = require('../services/tts');
-      const audioUrl = await synthesize(randomReply, CallSid);
+      const { replyText, audioUrl } = await pipeline.process({
+        callSid: CallSid,
+        speechResult: '',
+        recordingUrl: null,
+        silent: true,
+      });
 
       // ✅ play INSIDE gather
       const gather = twiml.gather({
@@ -129,10 +123,15 @@ router.post('/gather', validateTwilio, async (req, res) => {
         speechModel:     'phone_call',
         profanityFilter: false,
       });
-      gather.play(audioUrl);
+
+      if (audioUrl) {
+        gather.play(audioUrl);
+      } else {
+        gather.say({ voice: 'Polly.Aditi-Neural', language: 'en-IN' }, replyText);
+      }
 
     } catch (e) {
-      buildGatherTwiML(twiml, CallSid, randomReply);
+      buildGatherTwiML(twiml, CallSid, 'enti ra, cheppu ra, em jarigindi?');
     }
 
     // ✅ redirect fallback — if still silent, loop back

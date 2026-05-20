@@ -255,4 +255,38 @@ async function respond(history) {
   return { reply, shouldHangup: false };
 }
 
-module.exports = { respond };
+async function respondToSilence(history) {
+  const recentHistory = history.slice(-6);
+
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.1-8b-instant',
+    messages: [
+      {
+        role: 'system',
+        content: `${SYSTEM_PROMPT}\n\nSILENCE HANDLING:\nIf the user goes quiet or says nothing, ask one short, relevant follow-up question based on the recent conversation. Keep it casual, one sentence only, and max 12 words. Do not mention silence or that they stopped talking.`
+      },
+      ...recentHistory,
+      {
+        role: 'user',
+        content: 'The user stayed silent. Ask the most relevant follow-up question now.'
+      }
+    ],
+    max_tokens: 24,
+    temperature: 0.9,
+    top_p: 0.95,
+    presence_penalty: 0.6,
+    frequency_penalty: 0.5,
+  });
+
+  let reply = completion.choices[0].message.content.trim();
+  reply = reply.replace(/[\u0C00-\u0C7F]/g, '').trim();
+  reply = reply.replace(/^[,.\s?!]+$/, '').trim();
+
+  if (!reply || reply.length < 4) {
+    reply = getNextFallback();
+  }
+
+  return { reply, shouldHangup: false };
+}
+
+module.exports = { respond, respondToSilence };

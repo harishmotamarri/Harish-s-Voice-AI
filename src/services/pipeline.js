@@ -17,7 +17,7 @@ const logger = require('../utils/logger');
  * @param {string} [params.recordingUrl] — Audio URL for Whisper (Step 3)
  * @returns {{ replyText: string, audioUrl: string|null }}
  */
-async function process({ callSid, speechResult, recordingUrl }) {
+async function process({ callSid, speechResult, recordingUrl, silent = false }) {
   const startTime = Date.now();
 
   // ── 1. Speech-to-Text ────────────────────────────────────────────────────
@@ -35,11 +35,21 @@ async function process({ callSid, speechResult, recordingUrl }) {
     }
   }
 
-  if (!userText || userText.trim() === '') {
-    return {
-      replyText: 'Em annaaru vinaleedu. Malli cheppandi.',
-      audioUrl: null
-    };
+  const isSilentTurn = silent || !userText || userText.trim() === '';
+
+  if (isSilentTurn) {
+    const history = await db.getConversationHistory(callSid);
+    const { reply: replyText, shouldHangup } = await llm.respondToSilence(history);
+
+    const [audioUrl] = await Promise.all([
+      tts.synthesize(replyText, callSid).catch(err => {
+        logger.warn('TTS failed', { callSid, error: err.message });
+        return null;
+      }),
+      db.addTranscript(callSid, 'assistant', replyText)
+    ]);
+
+    return { replyText, audioUrl, shouldHangup };
   }
 
   // ── 2. Save user message ─────────────────────────────────────────────────
