@@ -763,11 +763,318 @@
     100% { box-shadow: 0 6px 20px rgba(255, 95, 126, 0.4); }
   }
 
+  @media (max-width: 900px) {
+    .container {
+      padding: 1.6rem 1rem;
+    }
+
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .status-pill {
+      align-self: flex-start;
+    }
+
+    .stats-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+
+    .grid {
+      gap: 1.2rem;
+    }
+  }
+
   @media (max-width: 640px) {
-    .browser-preview { grid-template-columns: 44px 1fr; }
-    .btn-demo {
-      grid-column: 1 / -1;
+    body {
+      background:
+        radial-gradient(circle at top, rgba(124, 110, 247, 0.12), transparent 34%),
+        radial-gradient(circle at bottom, rgba(255, 95, 126, 0.08), transparent 28%),
+        var(--bg);
+    }
+
+    .container {
+      padding: 0.85rem 0.7rem 1rem;
+    }
+
+    header,
+    .card {
+      border-radius: 18px;
+    }
+
+    header {
+      padding: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .logo {
+      gap: 0.85rem;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      font-size: 1.2rem;
+    }
+
+    .logo-text h1 {
+      font-size: 1.1rem;
+    }
+
+    .logo-text p {
+      font-size: 0.7rem;
+    }
+
+    .status-pill {
       width: 100%;
+      justify-content: center;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.72rem;
+    }
+
+    .stats-row {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-card {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+
+    .stat-value {
+      font-size: 1.65rem;
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+    }
+
+    .grid {
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .card {
+      padding: 1rem;
+    }
+
+    .call-card {
+      padding: 1rem;
+    }
+
+    .call-avatar {
+      width: 92px;
+      height: 92px;
+      font-size: 2rem;
+      margin: 0.2rem auto 0;
+    }
+
+    .call-name h2 {
+      font-size: 1.45rem;
+    }
+
+    .call-name p {
+      font-size: 0.8rem;
+    }
+
+    .call-timer {
+      font-size: 1.3rem;
+      letter-spacing: 0.08em;
+    }
+
+    .waveform {
+      gap: 0.25rem;
+      padding: 0.2rem 0;
+    }
+
+    .wave-bar {
+      width: 4px;
+      border-radius: 2px;
+    }
+
+    .call-status-text {
+      font-size: 0.82rem;
+      min-height: 2.2em;
+      line-height: 1.45;
+    }
+
+    .phone-input-wrap {
+      gap: 0.45rem;
+    }
+
+    .phone-input {
+      font-size: 16px;
+      padding: 0.9rem 1rem;
+    }
+
+    .btn-group,
+    .btn-group .btn,
+    .btn-demo,
+    .view-btn,
+    .trial-actions .btn {
+      width: 100%;
+    }
+
+    .btn-group {
+      display: block;
+    }
+
+    .btn,
+    .btn-demo {
+      justify-content: center;
+    }
+
+    .transcript-card {
+      min-height: 320px;
+      height: auto;
+    }
+
+    .transcript-body {
+      padding-right: 0;
+    }
+
+    .bubble-text {
+      max-width: 92%;
+      font-size: 0.82rem;
+      padding: 0.75rem 0.95rem;
+    }
+
+    .browser-preview {
+      grid-template-columns: 40px 1fr;
+      gap: 0.8rem;
+      padding: 1rem;
+    }
+
+    .preview-copy p {
+      font-size: 0.76rem;
+    }
+
+    .browser-preview .btn-demo {
+      grid-column: 1 / -1;
+      min-width: 0;
+      padding: 0.85rem 1rem;
+    }
+
+    .log-card {
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+
+    .log-table {
+      min-width: 760px;
+      border-spacing: 0 6px;
+    }
+
+    .log-table tr {
+      cursor: pointer;
+    }
+
+    .view-btn {
+      min-height: 44px;
+      padding: 0.8rem 1rem;
+    }
+
+    .log-table tr:active td {
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .modal-overlay {
+      padding: 0.75rem;
+      align-items: flex-end;
+    }
+
+    .modal,
+    .trial-modal {
+      max-height: 88vh;
+      border-radius: 18px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .trial-modal {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .toast {
+      left: 0.75rem;
+      right: 0.75rem;
+      bottom: 0.75rem;
+      width: auto;
+    }
+
+    .toast-content {
+      grid-template-columns: 32px 1fr 24px;
+      gap: 0.75rem;
+      padding: 0.95rem;
+    }
+
+    .toast-icon {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .container {
+      padding: 0.65rem 0.5rem 0.9rem;
+    }
+
+    .call-avatar {
+      width: 84px;
+      height: 84px;
+      font-size: 1.8rem;
+    }
+
+    .call-name h2 {
+      font-size: 1.3rem;
+    }
+
+    .browser-preview {
+      grid-template-columns: 1fr;
+      text-align: left;
+    }
+
+    .preview-icon {
+      width: 34px;
+      height: 34px;
+      font-size: 1rem;
+    }
+
+    .btn-demo {
+      font-size: 0.78rem;
+    }
+
+    .modal-header,
+    .modal-body {
+      padding: 0.9rem;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .card:hover,
+    .browser-preview:hover,
+    .view-btn:hover,
+    .btn-secondary:hover,
+    .btn-demo:hover {
+      transform: none;
+      box-shadow: inherit;
+    }
+    .card:hover::before,
+    .browser-preview:hover::after {
+      left: -150%;
+    }
+    .preview-icon,
+    .browser-preview:hover .preview-icon {
+      transform: none;
     }
   }
 
@@ -1114,7 +1421,7 @@
       <div class="avatar">🎙️</div>
       <div class="logo-text">
         <h1>Harish's Voice AI</h1>
-        <p>Telugu · Hyderabad · Real-time</p>
+        <p>Telugu · Hyderabad · Analytics Dashboard</p>
       </div>
     </div>
     <div class="status-pill">
@@ -1181,7 +1488,7 @@
 
         <div style="font-size:0.72rem; color:var(--muted); font-family:var(--mono); text-align:center; line-height:1.6">
           Calls come in via Twilio.<br>
-          This dashboard shows live status.
+          This is a trail account i can add you as a verified caller, ping me if you want to test the call feature!<br>
         </div>
       </div>
     </div>
@@ -1208,10 +1515,10 @@
         <div class="preview-icon">🎙</div>
         <div class="preview-copy">
           <div class="card-label">Browser Preview</div>
-          <p>30s mic test with greeting, live transcript, and auto goodbye.</p>
+          <p>3 minutes live call test experience with Harish's Voice AI.</p>
         </div>
         <button class="btn btn-demo" id="btnDemo" onclick="startWebDemo()">
-          🎤 Start 30s Web Demo
+          🎤 Start 3-Minute Web Demo
         </button>
       </div>
     </div>
@@ -1394,14 +1701,14 @@
       }
 
       tbody.innerHTML = calls.map(c => `
-        <tr>
-          <td style="color:var(--muted)">${c.id.slice(2, 10)}…</td>
-          <td>${c.from_number || '—'}</td>
-          <td>${formatTime(c.started_at)}</td>
-          <td>${c.duration_sec ? c.duration_sec + 's' : '—'}</td>
-          <td>${c.turn_count || 0}</td>
-          <td><span class="badge ${c.status === 'completed' ? 'completed' : isActiveCallStatus(c.status) ? 'active' : 'failed'}">${c.status}</span></td>
-          <td><button class="view-btn" onclick="viewTranscript('${c.id}')">View</button></td>
+        <tr onclick="viewTranscript('${c.id}')">
+          <td data-label="Call SID" style="color:var(--muted)">${c.id.slice(2, 10)}…</td>
+          <td data-label="From">${c.from_number || '—'}</td>
+          <td data-label="Started">${formatTime(c.started_at)}</td>
+          <td data-label="Duration">${c.duration_sec ? c.duration_sec + 's' : '—'}</td>
+          <td data-label="Turns">${c.turn_count || 0}</td>
+          <td data-label="Status"><span class="badge ${c.status === 'completed' ? 'completed' : isActiveCallStatus(c.status) ? 'active' : 'failed'}">${c.status}</span></td>
+          <td data-label="Action"><button type="button" class="view-btn" onclick="event.stopPropagation(); viewTranscript('${c.id}')">View transcript</button></td>
         </tr>
       `).join('');
     } catch (e) {
@@ -1663,6 +1970,7 @@
   let demoEnding = false;
   let demoRecognitionActive = false;
   let demoProcessingSpeech = false;
+  let demoListenRestartTimeout = null;
 
   function startDemoListening(label = 'Listening... Speak now!') {
       if (!recognition || demoEnding || demoProcessingSpeech || demoRecognitionActive) return;
@@ -1675,6 +1983,14 @@
           setTimeout(() => startDemoListening(label), 350);
       }
   }
+
+    function scheduleDemoListening(label = 'Listening... Speak now!', delay = 300) {
+      if (demoListenRestartTimeout) clearTimeout(demoListenRestartTimeout);
+      demoListenRestartTimeout = setTimeout(() => {
+        demoListenRestartTimeout = null;
+        startDemoListening(label);
+      }, delay);
+    }
 
   async function startWebDemo() {
     // Check if browser supports SpeechRecognition
@@ -1722,7 +2038,7 @@
     osc.stop(ctx.currentTime + 0.1);
 
     if (demoTimerInterval) clearTimeout(demoTimerInterval);
-    demoTimerInterval = setTimeout(endWebDemoWithGoodbye, 30000);
+    demoTimerInterval = setTimeout(endWebDemoWithGoodbye, 180000);
 
     // Start Recognition Setup
     recognition = new SpeechRecognition();
@@ -1747,7 +2063,7 @@
         if (demoEnding) return;
         // If recognition stops automatically (e.g. timeout on silence), restart if timer active
         if (document.getElementById('callTimer').classList.contains('active') && !demoProcessingSpeech && document.getElementById('callStatusText').textContent !== 'Harish is speaking...') {
-            startDemoListening('Listening... Speak now!');
+        scheduleDemoListening('Listening... Speak now!');
         }
     };
 
@@ -1776,7 +2092,7 @@
       }
       text = text.trim();
       if (!text) {
-        startDemoListening('Listening... Speak again!');
+        scheduleDemoListening('Listening... Speak again!');
         return;
       }
       demoProcessingSpeech = true;
@@ -1807,9 +2123,9 @@
             const handleResponseEnded = () => {
                 document.getElementById('waveform').classList.remove('speaking');
                 demoProcessingSpeech = false;
-                // If there's still time left in the 30s, listen again
+                 // If there's still time left in the 3-minute window, listen again
                 if (document.getElementById('callTimer').classList.contains('active')) {
-                   startDemoListening('Listening... Speak again!');
+                 scheduleDemoListening('Listening... Speak again!');
                 }
             };
 
@@ -1828,14 +2144,14 @@
             setTimeout(() => {
                 demoProcessingSpeech = false;
                 if (document.getElementById('callTimer').classList.contains('active')) {
-                   startDemoListening('Listening... Speak again!');
+                 scheduleDemoListening('Listening... Speak again!');
                 }
             }, 1000);
         }
       } catch (e) {
           demoProcessingSpeech = false;
           showToast('Processing failed', 'Could not process your speech. Try again.', 'error');
-          startDemoListening('Listening... Speak again!');
+          scheduleDemoListening('Listening... Speak again!');
       }
     };
 
@@ -1859,7 +2175,7 @@
                 document.getElementById('waveform').classList.remove('speaking');
                 // Start listening only AFTER greeting is finished playing
                 if (document.getElementById('callTimer').classList.contains('active')) {
-                   startDemoListening('Listening... Speak now!');
+                 scheduleDemoListening('Listening... Speak now!');
                 }
             };
 
@@ -1875,10 +2191,10 @@
             });
         } else {
             // Fallback immediately
-            startDemoListening('Listening... Speak now!');
+            scheduleDemoListening('Listening... Speak now!');
         }
     } catch(e) {
-        startDemoListening('Listening... Speak now!');
+          scheduleDemoListening('Listening... Speak now!');
     }
   }
 
@@ -1890,6 +2206,8 @@
       demoProcessingSpeech = false;
       if (demoTimerInterval) clearTimeout(demoTimerInterval);
       demoTimerInterval = null;
+      if (demoListenRestartTimeout) clearTimeout(demoListenRestartTimeout);
+      demoListenRestartTimeout = null;
       if (demoAudioElement) demoAudioElement.pause();
       document.getElementById('callStatusText').textContent = 'Ending call...';
 
@@ -1912,6 +2230,8 @@
       demoProcessingSpeech = false;
       if (demoTimerInterval) clearTimeout(demoTimerInterval);
       demoTimerInterval = null;
+      if (demoListenRestartTimeout) clearTimeout(demoListenRestartTimeout);
+      demoListenRestartTimeout = null;
       document.getElementById('waveform').classList.add('speaking');
       document.getElementById('callStatusText').textContent = 'Harish is saying bye...';
       document.getElementById('callStatusText').className = 'call-status-text active';
@@ -1935,10 +2255,12 @@
       demoProcessingSpeech = false;
       if (demoTimerInterval) clearTimeout(demoTimerInterval);
       demoTimerInterval = null;
+      if (demoListenRestartTimeout) clearTimeout(demoListenRestartTimeout);
+      demoListenRestartTimeout = null;
       if (demoAudioElement) demoAudioElement.pause();
       
       const btn = document.getElementById('btnDemo');
-      btn.innerHTML = '🎤 Start 30s Web Demo';
+      btn.innerHTML = '🎤 Start 3-Minute Web Demo';
       btn.onclick = startWebDemo;
       btn.classList.remove('active');
 
