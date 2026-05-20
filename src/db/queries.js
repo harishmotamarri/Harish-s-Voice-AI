@@ -211,6 +211,27 @@ async function getStats() {
   };
 }
 
+/**
+ * Get the most recent active (in-progress) call.
+ * Limits search to the last 30 minutes to avoid stale records.
+ */
+async function getActiveCall() {
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('calls')
+    .select('*')
+    .in('status', ['initiated', 'ringing', 'in-progress', 'dialing', 'queued'])
+    .gte('started_at', thirtyMinsAgo)
+    .order('started_at', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    logger.error('DB getActiveCall error', { error: error.message });
+    return null;
+  }
+  return data && data.length > 0 ? data[0] : null;
+}
+
 module.exports = {
   createCall,
   updateCallStatus,
@@ -221,5 +242,7 @@ module.exports = {
   getFullCallLog,
   getRecentCalls,
   getConversationHistory,
-  getStats
+  getStats,
+  getActiveCall
 };
+

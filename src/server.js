@@ -90,6 +90,41 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Serve the timer page only if a call is active
+app.get('/timer', async (req, res) => {
+  try {
+    const activeCall = await db.getActiveCall();
+    if (!activeCall) {
+      // If no call is online, the page should not show. Return 404.
+      return res.status(404).send('Not Found');
+    }
+    // Serve the beautiful timer HTML view
+    res.sendFile(path.join(__dirname, 'views', 'timer.html'));
+  } catch (err) {
+    logger.error('/timer route error', { error: err.message });
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// JSON API endpoint for polling call status
+app.get('/timer/status', async (req, res) => {
+  try {
+    const activeCall = await db.getActiveCall();
+    if (!activeCall) {
+      return res.json({ active: false });
+    }
+    res.json({
+      active: true,
+      status: activeCall.status,
+      startedAt: activeCall.started_at,
+      fromNumber: activeCall.from_number
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, req, res, _next) => {
   logger.error('Unhandled error', { path: req.path, error: err.message });
