@@ -37,9 +37,18 @@ router.get('/call-me', async (req, res) => {
       process.env.TWILIO_AUTH_TOKEN
     );
 
+    const toPhone = String(req.query.phone || '').trim();
+
+    if (!/^\+\d{10,15}$/.test(toPhone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Valid phone number with country code is required'
+      });
+    }
+
     const call = await client.calls.create({
       url: `${process.env.BASE_URL}/voice/incoming`,
-      to: '+917658909216',   // 👈 replace with your number
+      to: toPhone,
       from: process.env.TWILIO_PHONE_NUMBER
     });
 

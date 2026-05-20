@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harish's Voice AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #2a2a3a;
+    --accent: #7c6ef7;
+    --accent2: #f76e6e;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --font: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(124,110,247,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(247,110,110,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .logo-text h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-text p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .status-dot.offline { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 480px; /* match the transcript card's original fixed height area */
+  }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .right-col { height: auto; }
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: rgba(124,110,247,0.3); }
+
+  .card-label {
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Call Interface ── */
+  .call-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem 1.5rem;
+    min-height: 550px;
+  }
+
+  .call-avatar {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    position: relative;
+  }
+
+  .call-avatar::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(124,110,247,0.3);
+    animation: ring 2s ease-in-out infinite;
+  }
+
+  .call-avatar.active::after {
+    border-color: var(--green);
+    box-shadow: 0 0 20px rgba(74,222,128,0.2);
+  }
+
+  @keyframes ring {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  .call-name {
+    text-align: center;
+    min-height: 58px;
+  }
+
+  .call-name h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .call-name p {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 0.2rem;
+  }
+
+  /* ── Call timer (only while call is in-progress) ── */
+  .call-timer {
+    display: none;
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--green);
+    line-height: 40px;
+  }
+
+  .call-timer.active { display: block; }
+
+  /* ── Waveform ── */
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 40px;
+  }
+
+  .wave-bar {
+    width: 4px;
+    background: var(--accent);
+    border-radius: 4px;
+    height: 4px;
+    transition: height 0.1s;
+  }
+
+  .waveform.speaking .wave-bar {
+    animation: wave 0.6s ease-in-out infinite;
+  }
+
+  .waveform.speaking .wave-bar:nth-child(1) { animation-delay: 0s; }
+  .waveform.speaking .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+  .waveform.speaking .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+  .waveform.speaking .wave-bar:nth-child(4) { animation-delay: 0.1s; }
+  .waveform.speaking .wave-bar:nth-child(5) { animation-delay: 0.05s; }
+  .waveform.speaking .wave-bar:nth-child(6) { animation-delay: 0.15s; }
+  .waveform.speaking .wave-bar:nth-child(7) { animation-delay: 0.25s; }
+
+  @keyframes wave {
+    0%, 100% { height: 4px; }
+    50% { height: 32px; }
+  }
+
+  /* ── Call status text ── */
+  .call-status-text {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-align: center;
+    min-height: 18px;
+  }
+
+  .call-status-text.active { color: var(--green); }
+  .call-status-text.ringing { color: var(--yellow); }
+
+  /* ── Phone number input ── */
+  .phone-input-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .phone-input-wrap label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .phone-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .phone-input:focus { border-color: var(--accent); }
+  .phone-input::placeholder { color: var(--muted); }
+
+  /* ── Buttons ── */
+  .btn-group {
+    display: flex;
+    gap: 0.8rem;
+    width: 100%;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 0.85rem;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .btn-call {
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    color: #0a1a0f;
+  }
+
+  .btn-call:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(74,222,128,0.3); }
+  .btn-call:active { transform: translateY(0); }
+  .btn-call:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-hangup {
+    background: linear-gradient(135deg, #f76e6e, #ef4444);
+    color: white;
+    display: none;
+  }
+
+  .btn-hangup.visible { display: flex; }
+  .btn-hangup:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(247,110,110,0.3); }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.2rem;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Live transcript ── */
+  .transcript-card {
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .transcript-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding-right: 0.5rem;
+  }
+
+  .transcript-body::-webkit-scrollbar { width: 4px; }
+  .transcript-body::-webkit-scrollbar-track { background: transparent; }
+  .transcript-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--muted);
+  }
+
+  .empty-state span { font-size: 2rem; }
+  .empty-state p { font-size: 0.8rem; font-family: var(--mono); }
+
+  .bubble {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .bubble.user { flex-direction: row-reverse; }
+
+  .bubble-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .bubble.user .bubble-icon { background: rgba(124,110,247,0.2); }
+  .bubble.assistant .bubble-icon { background: rgba(74,222,128,0.15); }
+
+  .bubble-text {
+    max-width: 80%;
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .bubble.user .bubble-text {
+    background: rgba(124,110,247,0.15);
+    border: 1px solid rgba(124,110,247,0.2);
+    border-top-right-radius: 4px;
+    text-align: right;
+  }
+
+  .bubble.assistant .bubble-text {
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.15);
+    border-top-left-radius: 4px;
+  }
+
+  /* ── Call log table ── */
+  .browser-preview {
+    padding: 1.1rem 1.2rem;
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    align-items: center;
+    gap: 0.9rem;
+    border-color: rgba(124,110,247,0.28);
+  }
+
+  .preview-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(124,110,247,0.15);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+  }
+
+  .preview-copy { min-width: 0; }
+  .preview-copy .card-label { margin-bottom: 0.25rem; }
+
+  .preview-copy p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .btn-demo {
+    flex: 0 0 auto;
+    min-width: 160px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid rgba(124,110,247,0.75);
+    white-space: nowrap;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+  }
+
+  .btn-demo:hover {
+    border-color: var(--accent);
+    background: rgba(124,110,247,0.12);
+  }
+
+  .btn-demo.active {
+    border-color: rgba(247,110,110,0.85);
+    background: rgba(247,110,110,0.12);
+    color: #fff;
+  }
+
+  @media (max-width: 640px) {
+    .browser-preview { grid-template-columns: 40px 1fr; }
+    .btn-demo {
+      grid-column: 1 / -1;
+      width: 100%;
+    }
+  }
+
+  .log-card { margin-bottom: 0; }
+
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .log-table th {
+    text-align: left;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 0.5rem 0.8rem;
+    font-weight: 400;
+  }
+
+  .log-table td {
+    padding: 0.7rem 0.5rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+  }
+
+  .log-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-flex;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+
+  .badge.completed { background: rgba(74,222,128,0.1); color: var(--green); }
+  .badge.failed { background: rgba(247,110,110,0.1); color: var(--accent2); }
+  .badge.active { background: rgba(251,191,36,0.1); color: var(--yellow); }
+
+  .view-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.2rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    transition: all 0.15s;
+  }
+
+  .view-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Loading ── */
+  .loading { color: var(--muted); font-family: var(--mono); font-size: 0.8rem; padding: 1rem 0; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: min(360px, calc(100vw - 2rem));
+    background: rgba(22, 22, 31, 0.96);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 18px 45px rgba(0,0,0,0.38);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+    transform: translateY(24px) scale(0.98);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.22s ease, opacity 0.22s ease, border-color 0.22s ease;
+  }
+
+  .toast.show {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .toast-content {
+    display: grid;
+    grid-template-columns: 34px 1fr 28px;
+    gap: 0.8rem;
+    align-items: start;
+    padding: 1rem 1rem 0.9rem;
+  }
+
+  .toast-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .toast-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+  }
+
+  .toast-message {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    line-height: 1.45;
+  }
+
+  .toast-close {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .toast-close:hover {
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+  }
+
+  .toast-progress {
+    height: 3px;
+    width: 100%;
+    transform-origin: left;
+    animation: toastProgress 3.2s linear forwards;
+  }
+
+  @keyframes toastProgress {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+  }
+
+  .toast.success { border-color: rgba(74,222,128,0.45); }
+  .toast.success .toast-icon { background: rgba(74,222,128,0.14); color: var(--green); }
+  .toast.success .toast-progress { background: var(--green); }
+  .toast.error { border-color: rgba(247,110,110,0.5); }
+  .toast.error .toast-icon { background: rgba(247,110,110,0.14); color: var(--accent2); }
+  .toast.error .toast-progress { background: var(--accent2); }
+  .toast.warning { border-color: rgba(251,191,36,0.5); }
+  .toast.warning .toast-icon { background: rgba(251,191,36,0.14); color: var(--yellow); }
+  .toast.warning .toast-progress { background: var(--yellow); }
+
+  /* ── Transcript modal ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-header h3 { font-size: 1rem; font-weight: 700; }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .trial-modal {
+    max-width: 480px;
+    padding: 1.6rem;
+    position: relative;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.45);
+  }
+
+  .trial-modal .modal-close {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .trial-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(251,191,36,0.14);
+    color: var(--yellow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .trial-modal h3 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+    margin-bottom: 0.7rem;
+  }
+
+  .trial-modal p {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    margin-bottom: 1.2rem;
+    max-width: 36rem;
+  }
+
+  .trial-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .trial-actions .btn {
+    flex: 0 0 auto;
+    min-width: 110px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="avatar">🎙️</div>
+      <div class="logo-text">
+        <h1>Harish's Voice AI</h1>
+        <p>Telugu · Hyderabad · Real-time</p>
+      </div>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot" id="serverDot"></div>
+      <span id="serverStatus">checking...</span>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="totalCalls">—</div>
+      <div class="stat-label">Total Calls</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--green)" id="activeCalls">0</div>
+      <div class="stat-label">Active Now</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--accent)" id="avgLatency">—</div>
+      <div class="stat-label">Avg Turns</div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="grid">
+
+    <div class="left-col">
+      <!-- Call Interface -->
+      <div class="card call-card">
+        <div class="card-label">Call Interface</div>
+
+        <div class="call-avatar" id="callAvatar">🤖</div>
+
+        <div class="call-name">
+          <h2>Harish</h2>
+          <p id="callSubtitle">AI Voice Assistant</p>
+        </div>
+
+        <div class="call-timer" id="callTimer" hidden aria-hidden="true"></div>
+
+        <div class="waveform" id="waveform">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+
+        <div class="call-status-text" id="callStatusText">Ready to receive calls</div>
+
+        <div class="phone-input-wrap">
+          <label>Number to call</label>
+          <input class="phone-input" type="tel" id="phoneInput" placeholder="+91 98765 43210" />
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-call" id="btnMakeCall" onclick="makeCall()">
+            📞 Call Me
+          </button>
+          <button class="btn btn-hangup" id="btnRefresh" onclick="refreshDashboard()" style="background:var(--surface); color:var(--text); border:1px solid var(--border); flex: 0.8">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div style="font-size:0.72rem; color:var(--muted); font-family:var(--mono); text-align:center; line-height:1.6">
+          Calls come in via Twilio.<br>
+          This dashboard shows live status.
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-col">
+      <!-- Live Transcript -->
+      <div class="card transcript-card" style="flex: 1; min-height: 0;">
+        <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Live Transcript</span>
+          <span id="liveCallId" style="font-size:0.65rem;color:var(--muted)"></span>
+        </div>
+        <div class="transcript-body" id="transcriptBody">
+          <div class="empty-state">
+            <span>💬</span>
+            <p>No active call</p>
+            <p style="font-size:0.7rem;margin-top:0.3rem">Transcript appears here in real-time</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Web Demo Card -->
+      <div class="card browser-preview">
+        <div class="preview-icon">🎙</div>
+        <div class="preview-copy">
+          <div class="card-label">Browser Preview</div>
+          <p>30s mic test with greeting, live transcript, and auto goodbye.</p>
+        </div>
+        <button class="btn btn-demo" id="btnDemo" onclick="startWebDemo()">
+          🎤 Start 30s Web Demo
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Call Logs -->
+  <div class="card log-card">
+    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <span>Recent Calls</span>
+      <button class="view-btn" onclick="loadCallLogs()">↻ Refresh</button>
+    </div>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Call SID</th>
+          <th>From</th>
+          <th>Started</th>
+          <th>Duration</th>
+          <th>Turns</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="callLogBody">
+        <tr><td colspan="7" class="loading">Loading call logs...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Transcript Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Call Transcript</h3>
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Twilio Trial Restriction Modal -->
+<div class="modal-overlay" id="trialModalOverlay" onclick="closeTrialModal(event)">
+  <div class="modal trial-modal">
+    <button class="modal-close" onclick="hideTrialModal()" aria-label="Close popup">×</button>
+    <div class="trial-icon">!</div>
+    <h3>Twilio trial restriction</h3>
+    <p>
+      This Twilio account is in trial mode. Add this phone number to Twilio Verified Caller IDs,
+      then try the call again, Or try web demo.
+    </p>
+    <div class="trial-actions">
+      <button class="btn" onclick="hideTrialModal()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const BASE = window.location.origin;
+
+  let callTimerInterval = null;
+  let callStartTime = null;
+  let pollInterval = null;
+  let currentLiveCallId = null;
+  let lastTranscriptCount = 0;
+  let toastTimeout = null;
+  let outboundCallPending = false;
+
+  function isActiveCallStatus(status) {
+    return ['in-progress', 'ringing', 'initiated', 'dialing', 'queued'].includes(status);
+  }
+
+  function isConnectingCallStatus(status) {
+    return ['dialing', 'initiated', 'ringing', 'queued'].includes(status);
+  }
+
+  function isCallOnline(status) {
+    return status === 'in-progress';
+  }
+
+  function isWebDemoActive() {
+    return document.getElementById('btnDemo').classList.contains('active');
+  }
+
+  function resetTranscriptEmpty() {
+    lastTranscriptCount = 0;
+    document.getElementById('transcriptBody').innerHTML = `
+      <div class="empty-state">
+        <span>💬</span>
+        <p>No active call</p>
+        <p style="font-size:0.7rem;margin-top:0.3rem">Transcript appears here in real-time</p>
+      </div>`;
+  }
+
+  const LIVE_CALL_ATTACH_MS = 5 * 60 * 1000;
+
+  function isRecentCall(call) {
+    const started = new Date(call.started_at || 0).getTime();
+    return started > 0 && Date.now() - started <= LIVE_CALL_ATTACH_MS;
+  }
+
+  function shouldShowCallInUI(call) {
+    if (call.id.startsWith('web_demo_')) {
+      return isWebDemoActive() && call.id === currentLiveCallId;
+    }
+    if (call.status === 'in-progress') {
+      if (call.id === currentLiveCallId) return true;
+      return isRecentCall(call);
+    }
+    return outboundCallPending && call.id === currentLiveCallId && isConnectingCallStatus(call.status);
+  }
+
+  function shouldTreatTranscriptAsLive(call, transcriptCount) {
+    return call.id === currentLiveCallId && isConnectingCallStatus(call.status) && transcriptCount > 0;
+  }
+
+  // ── Server health check ──
+  async function checkHealth() {
+    try {
+      const r = await fetch(`${BASE}/health`);
+      const d = await r.json();
+      document.getElementById('serverDot').className = 'status-dot';
+      document.getElementById('serverStatus').textContent = 'server online';
+    } catch {
+      document.getElementById('serverDot').className = 'status-dot offline';
+      document.getElementById('serverStatus').textContent = 'server offline';
+    }
+  }
+
+  // ── Load call logs ──
+  async function loadCallLogs() {
+    try {
+      // Fetch stats
+      const rStats = await fetch(`${BASE}/logs/stats`);
+      const dStats = await rStats.json();
+      if (dStats.ok && dStats.stats) {
+        document.getElementById('totalCalls').textContent = dStats.stats.totalCalls || 0;
+        document.getElementById('activeCalls').textContent = dStats.stats.activeCalls || 0;
+        document.getElementById('avgLatency').textContent = dStats.stats.avgTurns || 0;
+      }
+
+      // Fetch list
+      const r = await fetch(`${BASE}/logs/calls?limit=10`);
+      const d = await r.json();
+      const calls = d.calls || [];
+
+      // Check for active call UI (from recent list)
+      // Ignore calls older than 30 minutes to prevent old disconnected calls from getting stuck as 'active'
+      const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+      const active = calls.filter(c => {
+        if (!isActiveCallStatus(c.status)) return false;
+        if (new Date(c.started_at || Date.now()) < thirtyMinsAgo) return false;
+        if (!shouldShowCallInUI(c)) return false;
+        return true;
+      });
+
+      if (active.length > 0 && active[0].id !== currentLiveCallId) {
+        currentLiveCallId = active[0].id;
+        startLiveTracking(currentLiveCallId, active[0].started_at);
+        updateCallStateUI(active[0].from_number, active[0].status, active[0].turn_count);
+      } else if (active.length > 0 && active[0].id === currentLiveCallId) {
+        updateCallStateUI(active[0].from_number, active[0].status, active[0].turn_count);
+      } else if (active.length === 0 && !outboundCallPending && !isWebDemoActive()) {
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = null;
+        currentLiveCallId = null;
+        document.getElementById('liveCallId').textContent = '';
+        setCallIdle();
+        resetTranscriptEmpty();
+      }
+
+      // Render table
+      const tbody = document.getElementById('callLogBody');
+      if (!calls.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="loading">No calls yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = calls.map(c => `
+        <tr>
+          <td style="color:var(--muted)">${c.id.slice(2, 10)}…</td>
+          <td>${c.from_number || '—'}</td>
+          <td>${formatTime(c.started_at)}</td>
+          <td>${c.duration_sec ? c.duration_sec + 's' : '—'}</td>
+          <td>${c.turn_count || 0}</td>
+          <td><span class="badge ${c.status === 'completed' ? 'completed' : isActiveCallStatus(c.status) ? 'active' : 'failed'}">${c.status}</span></td>
+          <td><button class="view-btn" onclick="viewTranscript('${c.id}')">View</button></td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('callLogBody').innerHTML =
+        '<tr><td colspan="7" class="loading">Failed to load logs</td></tr>';
+    }
+  }
+
+  // ── Start tracking live call ──
+  function startLiveTracking(callSid, startedAt) {
+    document.getElementById('liveCallId').textContent = callSid.slice(0, 16) + '…';
+    lastTranscriptCount = 0;
+    pollLiveTranscript(callSid);
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => pollLiveTranscript(callSid), 2000);
+  }
+
+  async function pollLiveTranscript(callSid) {
+    try {
+      const r = await fetch(`${BASE}/logs/calls/${callSid}`);
+      const d = await r.json();
+      const transcripts = d.transcripts || [];
+
+      // Check if call ended or status updated
+      if (d.call) {
+        if (!isActiveCallStatus(d.call.status)) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+          currentLiveCallId = null;
+          document.getElementById('liveCallId').textContent = '';
+          setCallIdle();
+          resetTranscriptEmpty();
+          return;
+        } else if (!shouldShowCallInUI(d.call) && !shouldTreatTranscriptAsLive(d.call, transcripts.length)) {
+          if (!outboundCallPending && !isWebDemoActive()) {
+            setCallIdle();
+            resetTranscriptEmpty();
+          }
+          return;
+        } else {
+          updateCallStateUI(d.call.from_number, d.call.status, transcripts.length);
+        }
+      }
+
+      if (transcripts.length === lastTranscriptCount) return;
+      lastTranscriptCount = transcripts.length;
+
+      const body = document.getElementById('transcriptBody');
+
+      if (!transcripts.length) {
+        body.innerHTML = `<div class="empty-state"><span>👂</span><p>Listening...</p></div>`;
+        return;
+      }
+
+      body.innerHTML = transcripts.map(t => `
+        <div class="bubble ${t.speaker}">
+          <div class="bubble-icon">${t.speaker === 'user' ? '👤' : '🤖'}</div>
+          <div class="bubble-text">${t.message}</div>
+        </div>
+      `).join('');
+
+      // Waveform animation
+      const last = transcripts[transcripts.length - 1];
+      if (last.speaker === 'assistant') {
+        document.getElementById('waveform').classList.add('speaking');
+        setTimeout(() => document.getElementById('waveform').classList.remove('speaking'), 2000);
+      }
+
+      body.scrollTop = body.scrollHeight;
+    } catch {}
+  }
+
+  // ── Call state UI ──
+  function updateCallStateUI(from, status) {
+    if (isCallOnline(status) && (currentLiveCallId || isWebDemoActive())) {
+      outboundCallPending = false;
+      document.getElementById('callAvatar').classList.add('active');
+      document.getElementById('callStatusText').textContent = `Talking with ${from || 'caller'}`;
+      document.getElementById('callStatusText').className = 'call-status-text active';
+      document.getElementById('callSubtitle').textContent = 'In Call';
+      if (!callStartTime) startCallTimer();
+      return;
+    }
+
+    if (isConnectingCallStatus(status) && outboundCallPending) {
+      document.getElementById('callAvatar').classList.add('active');
+      document.getElementById('callStatusText').textContent = 'Dialing / Ringing...';
+      document.getElementById('callStatusText').className = 'call-status-text ringing';
+      document.getElementById('callSubtitle').textContent = 'Waiting for answer';
+      stopCallTimer();
+      return;
+    }
+
+    if (!outboundCallPending && !isWebDemoActive()) {
+      setCallIdle();
+    }
+  }
+
+  function setCallIdle() {
+    outboundCallPending = false;
+    document.getElementById('callAvatar').classList.remove('active');
+    document.getElementById('callStatusText').textContent = 'Ready to receive calls';
+    document.getElementById('callStatusText').className = 'call-status-text';
+    document.getElementById('callSubtitle').textContent = 'AI Voice Assistant';
+    stopCallTimer();
+    document.getElementById('waveform').classList.remove('speaking');
+  }
+
+  function startCallTimer() {
+    if (!currentLiveCallId && !isWebDemoActive()) return;
+    const el = document.getElementById('callTimer');
+    callStartTime = Date.now();
+    el.hidden = false;
+    el.setAttribute('aria-hidden', 'false');
+    el.classList.add('active');
+    updateTimer();
+    if (callTimerInterval) clearInterval(callTimerInterval);
+    callTimerInterval = setInterval(updateTimer, 1000);
+  }
+
+  function stopCallTimer() {
+    const el = document.getElementById('callTimer');
+    el.classList.remove('active');
+    el.hidden = true;
+    el.setAttribute('aria-hidden', 'true');
+    el.textContent = '';
+    if (callTimerInterval) clearInterval(callTimerInterval);
+    callTimerInterval = null;
+    callStartTime = null;
+  }
+
+  function updateTimer() {
+    if (!callStartTime) return;
+    const sec = Math.floor((Date.now() - callStartTime) / 1000);
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    document.getElementById('callTimer').textContent = `${m}:${s}`;
+  }
+
+  // ── View transcript modal ──
+  async function viewTranscript(callSid) {
+    document.getElementById('modalTitle').textContent = `Transcript · ${callSid.slice(2, 12)}…`;
+    document.getElementById('modalBody').innerHTML = '<p class="loading">Loading...</p>';
+    document.getElementById('modalOverlay').classList.add('open');
+
+    try {
+      const r = await fetch(`${BASE}/logs/calls/${callSid}`);
+      const d = await r.json();
+      const transcripts = d.transcripts || [];
+
+      if (!transcripts.length) {
+        document.getElementById('modalBody').innerHTML =
+          '<p class="loading">No transcript available</p>';
+        return;
+      }
+
+      document.getElementById('modalBody').innerHTML = transcripts.map(t => `
+        <div class="bubble ${t.speaker}">
+          <div class="bubble-icon">${t.speaker === 'user' ? '👤' : '🤖'}</div>
+          <div class="bubble-text">${t.message}</div>
+        </div>
+      `).join('');
+    } catch {
+      document.getElementById('modalBody').innerHTML = '<p class="loading">Failed to load</p>';
+    }
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('modalOverlay')) {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+  }
+
+  function showTrialModal() {
+    document.getElementById('trialModalOverlay').classList.add('open');
+  }
+
+  function hideTrialModal() {
+    document.getElementById('trialModalOverlay').classList.remove('open');
+  }
+
+  function closeTrialModal(e) {
+    if (e.target === document.getElementById('trialModalOverlay')) {
+      hideTrialModal();
+    }
+  }
+
+  // ── Hangup via Twilio REST (optional) ──
+  async function hangupCall() {
+    showToast('Hangup unavailable', 'Manual hangup is not configured yet.', 'error');
+  }
+
+  // ── Refresh ──
+  function refreshDashboard() {
+    checkHealth();
+    loadCallLogs();
+      showToast('Dashboard refreshed', 'Call logs and status updated.', 'success');
+  }
+
+  // ── Make Outbound Call ──
+  async function makeCall() {
+    let phone = document.getElementById('phoneInput').value.trim();
+    phone = phone.replace(/[\s()-]/g, '');
+    
+    if (!phone) {
+      showToast('Phone number needed', 'Enter the number you want Harish to call.', 'error');
+      document.getElementById('phoneInput').focus();
+      return;
+    }
+
+    // Auto-prefix +91 for 10-digit Indian numbers if the user forgot it
+    if (!phone.startsWith('+')) {
+      if (phone.length === 10) {
+        phone = '+91' + phone;
+      } else {
+        phone = '+' + phone;
+      }
+    }
+
+    if (!/^\+\d{10,15}$/.test(phone)) {
+      showToast('Invalid phone number', 'Use country code format, like +91 98765 43210.', 'error');
+      document.getElementById('phoneInput').focus();
+      return;
+    }
+
+    // Instantly show Dialing UI before the backend even confirms
+    outboundCallPending = true;
+    updateCallStateUI(phone, 'dialing');
+
+    showToast('Calling now', `Dialing ${phone}...`, 'success');
+    try {
+      const url = `${BASE}/process/call-me?phone=${encodeURIComponent(phone)}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      
+      if (d.success) {
+        currentLiveCallId = d.callSid;
+        startLiveTracking(currentLiveCallId);
+        showToast('Call initiated', 'Waiting for the phone to connect.', 'success');
+        
+        // Let the polling grab the real ID when they answer.
+        // We just leave the UI in "Dialing..." until then.
+      } else {
+        setCallIdle(); // reset UI on fail
+        if (d.error && (d.error.toLowerCase().includes('unverified') || d.error.toLowerCase().includes('trial'))) {
+          showTrialModal();
+        } else {
+          showToast('Call failed', d.error || 'Twilio could not start the call.', 'error', 5000);
+        }
+      }
+    } catch (e) {
+      setCallIdle(); // reset UI on fail
+      showToast('Call failed', 'Check the server and try again.', 'error');
+    }
+  }
+
+  // ── Web Demo (In-Browser Speech) ──
+  let recognition;
+  let demoTimerInterval;
+  let demoAudioElement = null;
+  let demoCallSid = null;
+  let demoEnding = false;
+  let demoRecognitionActive = false;
+  let demoProcessingSpeech = false;
+
+  function startDemoListening(label = 'Listening... Speak now!') {
+      if (!recognition || demoEnding || demoProcessingSpeech || demoRecognitionActive) return;
+      document.getElementById('callStatusText').textContent = label;
+      document.getElementById('callStatusText').className = 'call-status-text active';
+      try {
+          recognition.start();
+      } catch (e) {
+          demoRecognitionActive = false;
+          setTimeout(() => startDemoListening(label), 350);
+      }
+  }
+
+  async function startWebDemo() {
+    // Check if browser supports SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      showToast('Browser not supported', 'Please try the web demo in Chrome or Microsoft Edge.', 'error', 6000);
+      return;
+    }
+
+    if (recognition) {
+        recognition.stop();
+    }
+
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+      }
+    } catch (e) {
+      showToast('Microphone blocked', 'Allow microphone permission, then start Web Demo again.', 'warning', 7000);
+      return;
+    }
+
+    demoEnding = false;
+    demoRecognitionActive = false;
+    demoProcessingSpeech = false;
+    demoCallSid = 'web_demo_' + Date.now();
+    currentLiveCallId = demoCallSid;
+    startLiveTracking(demoCallSid);
+    
+    // Set UI to Demo Mode
+    const btn = document.getElementById('btnDemo');
+    btn.innerHTML = '⏹ Stop Web Demo';
+    btn.onclick = stopWebDemo;
+    btn.classList.add('active');
+
+    updateCallStateUI('Browser Mic', 'in-progress', 1);
+    
+    // Play a tiny beep to show it started
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.connect(ctx.destination);
+    osc.frequency.value = 800;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+
+    if (demoTimerInterval) clearTimeout(demoTimerInterval);
+    demoTimerInterval = setTimeout(endWebDemoWithGoodbye, 30000);
+
+    // Start Recognition Setup
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+        demoRecognitionActive = true;
+        document.getElementById('waveform').classList.add('speaking');
+        document.getElementById('callStatusText').textContent = 'Listening... Speak now!';
+        document.getElementById('callStatusText').className = 'call-status-text active';
+    };
+
+    recognition.onspeechend = () => {
+        document.getElementById('waveform').classList.remove('speaking');
+    };
+
+    recognition.onend = () => {
+        demoRecognitionActive = false;
+        if (demoEnding) return;
+        // If recognition stops automatically (e.g. timeout on silence), restart if timer active
+        if (document.getElementById('callTimer').classList.contains('active') && !demoProcessingSpeech && document.getElementById('callStatusText').textContent !== 'Harish is speaking...') {
+            startDemoListening('Listening... Speak now!');
+        }
+    };
+
+    recognition.onerror = (e) => {
+        console.warn('Speech error', e.error);
+        demoRecognitionActive = false;
+        if (e.error === 'not-allowed') {
+            showToast('Microphone blocked', 'Allow mic permission in the browser, then start again.', 'warning', 6000);
+            stopWebDemo();
+        } else if (e.error === 'audio-capture') {
+            showToast('No microphone found', 'Check your mic input and try again.', 'error', 6000);
+            stopWebDemo();
+        } else if (e.error === 'no-speech') {
+            document.getElementById('callStatusText').textContent = 'Listening... Speak now!';
+        }
+    };
+
+    recognition.onresult = async (event) => {
+      let text = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        text += event.results[i][0].transcript;
+        if (!event.results[i].isFinal) {
+          document.getElementById('callStatusText').textContent = `Heard: ${text.trim()}`;
+          return;
+        }
+      }
+      text = text.trim();
+      if (!text) {
+        startDemoListening('Listening... Speak again!');
+        return;
+      }
+      demoProcessingSpeech = true;
+      document.getElementById('waveform').classList.remove('speaking');
+      document.getElementById('callStatusText').textContent = 'Processing your speech...';
+      document.getElementById('callStatusText').className = 'call-status-text ringing';
+
+      try {
+        const response = await fetch(`${BASE}/web/process`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text, callSid: demoCallSid})
+        });
+        const data = await response.json();
+        
+        if (data.shouldHangup) {
+           demoEnding = true;
+           playDemoEndingAudio(data.audioUrl);
+           return;
+        }
+
+        if (data.audioUrl) {
+            if (demoAudioElement) demoAudioElement.pause();
+            demoAudioElement = new Audio(data.audioUrl);
+            document.getElementById('waveform').classList.add('speaking');
+            document.getElementById('callStatusText').textContent = 'Harish is speaking...';
+            demoAudioElement.play();
+            
+            demoAudioElement.onended = () => {
+                document.getElementById('waveform').classList.remove('speaking');
+                demoProcessingSpeech = false;
+                // If there's still time left in the 30s, listen again
+                if (document.getElementById('callTimer').classList.contains('active')) {
+                   startDemoListening('Listening... Speak again!');
+                }
+            };
+        } else {
+            // No audio, wait a sec and prompt again
+            setTimeout(() => {
+                demoProcessingSpeech = false;
+                if (document.getElementById('callTimer').classList.contains('active')) {
+                   startDemoListening('Listening... Speak again!');
+                }
+            }, 1000);
+        }
+      } catch (e) {
+          demoProcessingSpeech = false;
+          showToast('Processing failed', 'Could not process your speech. Try again.', 'error');
+          startDemoListening('Listening... Speak again!');
+      }
+    };
+
+    // ── Fetch Initial Greeting ──
+    document.getElementById('callStatusText').textContent = 'Connecting...';
+    try {
+        const res = await fetch(`${BASE}/web/start`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ callSid: demoCallSid })
+        });
+        const data = await res.json();
+        
+        if (data.audioUrl) {
+            if (demoAudioElement) demoAudioElement.pause();
+            demoAudioElement = new Audio(data.audioUrl);
+            document.getElementById('waveform').classList.add('speaking');
+            document.getElementById('callStatusText').textContent = 'Harish is speaking...';
+            demoAudioElement.play();
+            
+            demoAudioElement.onended = () => {
+                document.getElementById('waveform').classList.remove('speaking');
+                // Start listening only AFTER greeting is finished playing
+                if (document.getElementById('callTimer').classList.contains('active')) {
+                   startDemoListening('Listening... Speak now!');
+                }
+            };
+        } else {
+            // Fallback immediately
+            startDemoListening('Listening... Speak now!');
+        }
+    } catch(e) {
+        startDemoListening('Listening... Speak now!');
+    }
+  }
+
+  async function endWebDemoWithGoodbye() {
+      if (demoEnding || !demoCallSid) return;
+      demoEnding = true;
+      if (recognition) recognition.stop();
+      demoRecognitionActive = false;
+      demoProcessingSpeech = false;
+      if (demoTimerInterval) clearTimeout(demoTimerInterval);
+      demoTimerInterval = null;
+      if (demoAudioElement) demoAudioElement.pause();
+      document.getElementById('callStatusText').textContent = 'Ending call...';
+
+      try {
+          const response = await fetch(`${BASE}/web/process`, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ text: 'bye', callSid: demoCallSid })
+          });
+          const data = await response.json();
+          playDemoEndingAudio(data.audioUrl);
+      } catch {
+          stopWebDemo();
+      }
+  }
+
+  function playDemoEndingAudio(audioUrl) {
+      if (recognition) recognition.stop();
+      demoRecognitionActive = false;
+      demoProcessingSpeech = false;
+      if (demoTimerInterval) clearTimeout(demoTimerInterval);
+      demoTimerInterval = null;
+      document.getElementById('waveform').classList.add('speaking');
+      document.getElementById('callStatusText').textContent = 'Harish is saying bye...';
+      document.getElementById('callStatusText').className = 'call-status-text active';
+
+      if (!audioUrl) {
+          stopWebDemo();
+          return;
+      }
+
+      if (demoAudioElement) demoAudioElement.pause();
+      demoAudioElement = new Audio(audioUrl);
+      demoAudioElement.onended = stopWebDemo;
+      demoAudioElement.onerror = stopWebDemo;
+      demoAudioElement.play().catch(() => stopWebDemo());
+  }
+
+  async function stopWebDemo() {
+      demoEnding = true;
+      if (recognition) recognition.stop();
+      demoRecognitionActive = false;
+      demoProcessingSpeech = false;
+      if (demoTimerInterval) clearTimeout(demoTimerInterval);
+      demoTimerInterval = null;
+      if (demoAudioElement) demoAudioElement.pause();
+      
+      const btn = document.getElementById('btnDemo');
+      btn.innerHTML = '🎤 Start 30s Web Demo';
+      btn.onclick = startWebDemo;
+      btn.classList.remove('active');
+
+      setCallIdle();
+      resetTranscriptEmpty();
+
+      // End call in DB if we were tracking it
+      if (demoCallSid) {
+          fetch(`${BASE}/logs/calls/${demoCallSid}/complete`, { method: 'POST' }).catch(() => {});
+          demoCallSid = null;
+      }
+  }
+
+  // ── Toast ──
+  function showToast(title, message = '', type = 'success', duration = 3200) {
+    const t = document.getElementById('toast');
+    if (toastTimeout) clearTimeout(toastTimeout);
+    const icon = type === 'success' ? '✓' : type === 'warning' ? '!' : '×';
+    t.innerHTML = `
+      <div class="toast-content">
+        <div class="toast-icon">${icon}</div>
+        <div>
+          <div class="toast-title">${escapeHtml(title)}</div>
+          ${message ? `<div class="toast-message">${escapeHtml(message)}</div>` : ''}
+        </div>
+        <button class="toast-close" type="button" onclick="hideToast()" aria-label="Close popup">×</button>
+      </div>
+      <div class="toast-progress" style="animation-duration:${duration}ms"></div>
+    `;
+    t.className = `toast show ${type}`;
+    toastTimeout = setTimeout(hideToast, duration);
+  }
+
+  function hideToast() {
+    const t = document.getElementById('toast');
+    t.className = 'toast';
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = null;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[ch]));
+  }
+
+  // ── Format time ──
+  function formatTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleTimeString('en-IN', {
+      hour: '2-digit', minute: '2-digit', hour12: true
+    });
+  }
+
+  // ── Init ──
+  setCallIdle();
+  resetTranscriptEmpty();
+  checkHealth();
+  loadCallLogs();
+  setInterval(loadCallLogs, 5000);   // auto-refresh every 5s
+  setInterval(checkHealth, 15000);   // health check every 15s
+</script>
+</body>
+</html>

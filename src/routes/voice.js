@@ -19,7 +19,7 @@ const VoiceResponse = twilio.twiml.VoiceResponse;
 
 // ── Validate Twilio signature in production ───────────────────────────────────
 function validateTwilio(req, res, next) {
-  if (process.env.NODE_ENV !== 'production') return next(); // skip in dev
+  if (process.env.NODE_ENV !== 'production') return next();
 
   const valid = twilio.validateRequest(
     process.env.TWILIO_AUTH_TOKEN,
@@ -37,8 +37,6 @@ function validateTwilio(req, res, next) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /voice/incoming
-// Twilio calls this the moment a call arrives.
-// We create a DB record and speak the opening greeting.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/incoming', validateTwilio, async (req, res) => {
   const { CallSid, From, To, CallStatus } = req.body;
@@ -48,28 +46,33 @@ router.post('/incoming', validateTwilio, async (req, res) => {
 
   try {
     await db.createCall(CallSid, From, To);
+    const greetingText = 'Hello, cheppu ra, enduku call chesav?';
+    await db.addTranscriptOnce(CallSid, 'assistant', greetingText);
 
     const { synthesize } = require('../services/tts');
 
     try {
-      const greetingAudio = await synthesize('Hello, cheppu ra, enduku call chesav?', CallSid);
+      const greetingAudio = await synthesize(greetingText, CallSid);
 
-      // ✅ Play INSIDE Gather — Twilio listens while/after audio plays
+      // ✅ FIX 1: play INSIDE gather + speechTimeout '3' instead of 'auto'
       const gather = twiml.gather({
-        input:          'speech',
-        action:         `${process.env.BASE_URL}/voice/gather`,
-        method:         'POST',
-        language:       'te-IN',
-        speechTimeout:  'auto',
-        speechModel:    'phone_call',
+        input:           'speech',
+        action:          `${process.env.BASE_URL}/voice/gather`,
+        method:          'POST',
+        language:        'te-IN',
+        speechTimeout:   '3',
+        speechModel:     'phone_call',
         profanityFilter: false,
       });
       gather.play(greetingAudio);
 
     } catch (e) {
       logger.warn('Greeting TTS failed, using fallback Say', { error: e.message });
-      buildGatherTwiML(twiml, CallSid, 'Hello, cheppu ra, enduku call chesav?');
+      buildGatherTwiML(twiml, CallSid, greetingText);
     }
+
+    // ✅ FIX 2: redirect after gather — silent caller loops back, never hangs up
+    twiml.redirect({ method: 'POST' }, `${process.env.BASE_URL}/voice/incoming`);
 
     logger.debug('TwiML generated for greeting', { CallSid });
     res.type('text/xml').send(twiml.toString());
@@ -84,61 +87,58 @@ router.post('/incoming', validateTwilio, async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /voice/gather
-// Twilio sends the caller's transcribed speech here.
-// We run it through the pipeline (STT → LLM → TTS) and reply.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/gather', validateTwilio, async (req, res) => {
   const {
     CallSid,
-    SpeechResult,     // Twilio's built-in STT result (used as fallback in Step 3)
-    RecordingUrl,     // URL to the audio — sent to Whisper for better accuracy
+    SpeechResult,
+    RecordingUrl,
     Confidence,
     CallStatus
   } = req.body;
 
   const twiml = new VoiceResponse();
 
-  logger.info('🎤  Speech received', {
-    CallSid,
-    SpeechResult,
-    Confidence,
-    CallStatus
-  });
+  logger.info('🎤  Speech received', { CallSid, SpeechResult, Confidence, CallStatus });
 
-  // Caller hung up or no speech detected
-// No speech detected — ask context-based question
-if (!SpeechResult && !RecordingUrl) {
-  logger.warn('No speech input, asking follow-up', { CallSid });
-  
-  const silenceReplies = [
-    'enti ra,em cheppav, vinipiyyaledhu?',
-    'hello? unnava ra?',
-    'enti ra, signal ok na ni daggara , vinipistunda?',
-    'em ra, matladu ra',
-    'enti ra silent ga unnav?'
-  ];
-  
-  const randomReply = silenceReplies[Math.floor(Math.random() * silenceReplies.length)];
-  
-  try {
-    const { synthesize } = require('../services/tts');
-    const audioUrl = await synthesize(randomReply, CallSid);
-    twiml.play(audioUrl);
-    twiml.gather({
-      input:           'speech',
-      action:          `${process.env.BASE_URL}/voice/gather`,
-      method:          'POST',
-      language:        'te-IN',
-      speechTimeout:   '3',
-      speechModel:     'phone_call',
-      profanityFilter: false
-    });
-  } catch(e) {
-    buildGatherTwiML(twiml, CallSid, randomReply);
+  // ✅ FIX 3: silence handler — play INSIDE gather + redirect fallback
+  if (!SpeechResult && !RecordingUrl) {
+    logger.warn('No speech input, asking follow-up', { CallSid });
+
+    const silenceReplies = [
+      'enti ra, em cheppav, vinipiyyaledhu?',
+      'hello? unnava ra?',
+      'enti ra, signal ok na ni daggara, vinipistunda?',
+      'em ra, matladu ra',
+      'enti ra silent ga unnav?'
+    ];
+
+    const randomReply = silenceReplies[Math.floor(Math.random() * silenceReplies.length)];
+
+    try {
+      const { synthesize } = require('../services/tts');
+      const audioUrl = await synthesize(randomReply, CallSid);
+
+      // ✅ play INSIDE gather
+      const gather = twiml.gather({
+        input:           'speech',
+        action:          `${process.env.BASE_URL}/voice/gather`,
+        method:          'POST',
+        language:        'te-IN',
+        speechTimeout:   '3',
+        speechModel:     'phone_call',
+        profanityFilter: false,
+      });
+      gather.play(audioUrl);
+
+    } catch (e) {
+      buildGatherTwiML(twiml, CallSid, randomReply);
+    }
+
+    // ✅ redirect fallback — if still silent, loop back
+    twiml.redirect({ method: 'POST' }, `${process.env.BASE_URL}/voice/gather`);
+    return res.type('text/xml').send(twiml.toString());
   }
-  
-  return res.type('text/xml').send(twiml.toString());
-}
 
   if (CallStatus === 'completed') {
     logger.info('Call already completed, skipping', { CallSid });
@@ -146,59 +146,60 @@ if (!SpeechResult && !RecordingUrl) {
   }
 
   try {
-    // 2. Run through AI pipeline: STT (if needed) → LLM → TTS
     const { replyText, audioUrl, shouldHangup } = await pipeline.process({
-      callSid: CallSid,
-      speechResult: SpeechResult,  // Twilio's built-in transcript (fallback)
-      recordingUrl: RecordingUrl   // Whisper will use this in Step 3
+      callSid:      CallSid,
+      speechResult: SpeechResult,
+      recordingUrl: RecordingUrl,
     });
 
+    // ✅ Only hang up when user explicitly said bye
     if (shouldHangup) {
+      await db.updateCallStatus(CallSid, 'completed');
       if (audioUrl) {
         twiml.play(audioUrl);
       } else {
         twiml.say({ language: 'en-IN' }, replyText);
       }
-      twiml.pause({ length: 1 }); // small pause so audio finishes
+      twiml.pause({ length: 1 });
       twiml.hangup();
+      logger.info('☎️  Hanging up', { CallSid });
       return res.type('text/xml').send(twiml.toString());
     }
 
     logger.info('🤖  AI reply ready', { CallSid, replyText: replyText.slice(0, 80) });
 
-    // 3. Build response TwiML
+    // ✅ FIX 4: play INSIDE gather + speechTimeout '3' + redirect fallback
     if (audioUrl) {
-      // Play gTTS audio FIRST, then listen
-      twiml.play(audioUrl);
-      twiml.gather({
-        input: 'speech',
-        action: `${process.env.BASE_URL}/voice/gather`,
-        method: 'POST',
-        language: 'te-IN',
-        speechTimeout: 'auto',
-        speechModel: 'phone_call',
+      const gather = twiml.gather({
+        input:           'speech',
+        action:          `${process.env.BASE_URL}/voice/gather`,
+        method:          'POST',
+        language:        'te-IN',
+        speechTimeout:   '3',
+        speechModel:     'phone_call',
         profanityFilter: false,
-        enhanced: true
+        enhanced:        true,
       });
+      gather.play(audioUrl);
+
     } else {
-      // Steps 2–4: fallback to Twilio's built-in TTS
       buildGatherTwiML(twiml, CallSid, replyText);
     }
 
+    // ✅ redirect — if caller silent after AI speaks, loop back, never hang up
+    twiml.redirect({ method: 'POST' }, `${process.env.BASE_URL}/voice/gather`);
+
     res.type('text/xml').send(twiml.toString());
+
   } catch (err) {
     logger.error('Pipeline error', { CallSid, error: err.message });
-    buildGatherTwiML(
-      twiml, CallSid,
-      'Sorry, oka chinna problem vacchindi. Malli try cheyyandi.'
-    );
+    buildGatherTwiML(twiml, CallSid, 'Sorry, oka chinna problem vacchindi. Malli try cheyyandi.');
     res.type('text/xml').send(twiml.toString());
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /voice/status
-// Twilio fires status callbacks: initiated → ringing → in-progress → completed
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/status', validateTwilio, async (req, res) => {
   const { CallSid, CallStatus, CallDuration } = req.body;
@@ -219,7 +220,7 @@ router.post('/status', validateTwilio, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper — build a <Gather> block with a <Say> inside
+// Helper — build a <Gather> with <Say> inside + redirect fallback
 // ─────────────────────────────────────────────────────────────────────────────
 function buildGatherTwiML(twiml, callSid, text) {
   const gather = twiml.gather({
@@ -229,12 +230,12 @@ function buildGatherTwiML(twiml, callSid, text) {
     language:        'te-IN',
     speechTimeout:   '3',
     speechModel:     'phone_call',
-    profanityFilter: false
+    profanityFilter: false,
   });
 
   gather.say({ voice: 'Polly.Aditi-Neural', language: 'en-IN' }, text);
 
-  // After timeout — redirect back to gather again instead of hanging up
+  // Redirect after timeout — never hang up
   twiml.redirect(`${process.env.BASE_URL}/voice/gather`);
 
   return gather;

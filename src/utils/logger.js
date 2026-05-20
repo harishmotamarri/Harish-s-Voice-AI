@@ -22,15 +22,21 @@ const logger = createLogger({
           return `${timestamp} [${level}] ${message}${extras}`;
         })
       )
-    }),
+    })
+  ]
+});
+
+// Conditionally add File transport if not in Vercel/Production
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(
     new transports.File({
       filename: path.join(__dirname, '../../logs/app.log'),
       maxsize:  5 * 1024 * 1024, // 5 MB
       maxFiles: 3,
       tailable: true
     })
-  ]
-});
+  );
+}
 
 // Create logs directory if it doesn't exist
 const fs = require('fs');

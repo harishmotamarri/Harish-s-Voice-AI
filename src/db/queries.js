@@ -105,6 +105,28 @@ async function addTranscript(callSid, speaker, message) {
   else logger.debug('Transcript saved', { callSid, speaker, preview: message.slice(0, 60) });
 }
 
+async function addTranscriptOnce(callSid, speaker, message) {
+  const { data: existing, error: findErr } = await supabase
+    .from('transcripts')
+    .select('id')
+    .eq('call_id', callSid)
+    .eq('speaker', speaker)
+    .eq('message', message)
+    .limit(1);
+
+  if (findErr) {
+    logger.error('DB addTranscriptOnce lookup error', { callSid, error: findErr.message });
+    return addTranscript(callSid, speaker, message);
+  }
+
+  if (existing && existing.length > 0) {
+    logger.debug('Transcript already exists, skipping', { callSid, speaker, preview: message.slice(0, 60) });
+    return;
+  }
+
+  return addTranscript(callSid, speaker, message);
+}
+
 // ─── QUERIES ──────────────────────────────────────────────────────────────────
 
 /**
@@ -164,13 +186,40 @@ async function getConversationHistory(callSid) {
   }));
 }
 
+/**
+ * Get overall call stats (total, active, avg turns).
+ */
+async function getStats() {
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+  const { count: totalCalls } = await supabase.from('calls').select('*', { count: 'exact', head: true });
+  const { count: activeCalls } = await supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .in('status', ['initiated', 'ringing', 'in-progress'])
+    .gte('started_at', thirtyMinsAgo);
+  const { data: turns } = await supabase.from('calls').select('turn_count').gt('turn_count', 0);
+  
+  const avgTurns = turns && turns.length > 0
+    ? Math.round(turns.reduce((s, c) => s + (c.turn_count || 0), 0) / turns.length)
+    : 0;
+
+  return {
+    totalCalls: totalCalls || 0,
+    activeCalls: activeCalls || 0,
+    avgTurns
+  };
+}
+
 module.exports = {
   createCall,
   updateCallStatus,
   incrementTurnCount,
   completeCall,
   addTranscript,
+  addTranscriptOnce,
   getFullCallLog,
   getRecentCalls,
-  getConversationHistory
+  getConversationHistory,
+  getStats
 };

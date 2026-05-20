@@ -4,7 +4,10 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
 
-const AUDIO_DIR = path.join(__dirname, '../../audio');
+const AUDIO_DIR = process.env.NODE_ENV === 'production' 
+  ? path.join('/tmp', 'audio') 
+  : path.join(__dirname, '../../audio');
+  
 if (!fs.existsSync(AUDIO_DIR)) fs.mkdirSync(AUDIO_DIR, { recursive: true });
 
 async function synthesize(text, callSid) {
