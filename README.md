@@ -142,3 +142,7 @@ curl -X POST http://localhost:3000/process/test \
 | OpenAI GPT-4o | — | ~$0.005/call |
 | ElevenLabs | 10k chars free | $5/mo |
 | **Total** | **~$0** | **~$10/mo** |
+
+
+
+By Harish Motamarri.
