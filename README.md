@@ -1,148 +1,275 @@
 # 📞 Harish Voice AI Assistant
-### Real-time Telugu+English Voice AI · Twilio · Whisper · GPT-4o · ElevenLabs · **Supabase**
 
----
+A real-time, bilingual (Telugu + English) conversational Voice AI assistant that mimics the personality of a 19-year-old Hyderabadi college student.
 
-## 🗺️ Build Roadmap
+![Screenshot](screenshot.png)
 
-| Step | What We Build | Status |
-|------|--------------|--------|
-| 1 | Architecture + Project Setup | ✅ Done |
-| 1b | **Supabase DB (replaces SQLite)** | ✅ Done |
-| 2 | Twilio Call Handling + Webhook Server | ✅ Done |
-| 3 | Speech-to-Text (Whisper API) | 🔜 Next |
-| 4 | LLM Response Engine (GPT-4o) | 🔜 |
-| 5 | TTS — ElevenLabs Voice Cloning | 🔜 |
-| 6 | Full Conversation Loop | 🔜 |
-| 7 | Testing + ngrok | 🔜 |
-| 8 | Deployment (Render/Railway) | 🔜 |
+## Demo
 
----
+Live: [https://harish-s-voice-ai.onrender.com](https://harish-s-voice-ai.onrender.com)
 
-## 🚀 Quick Start
+## Overview
 
-### 1. Install dependencies
+### What problem it solves
+Traditional voice assistants are robotic, overly formal, and struggle with regional Indian dialects and code-switching (mixing English and local languages like Telugu). Harish Voice AI solves this by acting like a close friend from Hyderabad. It understands natural speech and replies in Tenglish (Romanized Telugu) with authentic local slang.
+
+### Who it is for
+Developers interested in low-latency voice agents, hyper-local LLM personalities, Twilio integrations, and interactive real-time telephonic AI agents.
+
+### Key idea behind the project
+By linking Twilio call webhooks with a fast AI pipeline—composed of Whisper API for Telugu speech-to-text, Llama 3.1 on Groq for ultra-fast conversational reasoning, and Microsoft Edge TTS for natural Indian-accented speech synthesis—we achieve sub-second response times, logged live into a Supabase database.
+
+## Features
+
+- **Bilingual & Colloquial Understanding**: Transcribes and processes mixed Telugu and English (Tenglish) inputs using OpenAI's Whisper model.
+- **Hyper-Local Hyderabadi Personality**: Built-in prompt engineering mimics a 19-year-old CSE student from CMR Institute of Technology, featuring signature expressions like *"ORINII"*, *"picha lite"*, and *"atla emi ledhu ley kaani"*.
+- **Live Analytics Dashboard**: Web-based frontend displaying real-time call states, active call timers, and live transcription updates.
+- **Fast Response Latency**: Uses Groq's `llama-3.1-8b-instant` and Microsoft Edge TTS to ensure the conversation flows like a real phone call.
+- **Robust Conversation Handling**: Preconfigured rules for silence detection, delay deflection (e.g. naturally complaining about signal lag), and automatic call termination.
+- **Voice Cloning (Optional)**: Includes a standalone Python Flask server using XTTS v2 to clone and generate audio with a customized voice profile.
+
+## Tech Stack
+
+### Frontend
+- HTML5
+- CSS3 (Vanilla glassmorphism & dark theme)
+- JavaScript (ES6+ with SSE/REST polling)
+
+### Backend
+- Node.js (Express)
+- Python (Flask - for optional local XTTS server)
+
+### Database
+- Supabase (PostgreSQL)
+
+### Tools & APIs
+- Twilio (Voice Webhooks & Call Handling)
+- Groq Cloud API (Llama 3.1 8B LLM)
+- OpenAI API (Whisper STT)
+- Microsoft Edge TTS (Indian English Voice)
+- ElevenLabs API (Optional cloned voice)
+- ngrok (Secure local tunnel)
+- Git
+
+## Screenshots
+
+### Home Page
+![Home](screenshots/home.png)
+
+### Dashboard / Live Timer
+![Dashboard](screenshots/dashboard.png)
+
+## Architecture
+
+```text
+       User Call (Mobile Phone)
+                 │
+                 ▼
+          Twilio Carrier
+                 │
+      (HTTP POST Webhook)
+                 │
+                 ▼
+       Node.js Express App (Render) ◄───► Supabase DB (PostgreSQL)
+                 │
+    ┌────────────┼────────────┐
+    │            │            │
+    ▼            ▼            ▼
+Whisper STT   Groq LLM    Edge TTS
+ (OpenAI)    (Llama 3)   (Microsoft)
+    │            │            │
+    └───────────►┴───────────►┘
+                 │
+                 ▼
+       TwiML Audio Response
+                 │
+                 ▼
+           Twilio Carrier
+                 │
+                 ▼
+         User hears response
+```
+
+## Project Structure
+
+```text
+harish-voice-ai/
+├── audio/                     # Generated TTS audio cache files
+├── logs/                      # Application runtime log files
+├── src/
+│   ├── db/
+│   │   ├── client.js          # Supabase client singleton setup
+│   │   ├── init.js            # Table schema verification script
+│   │   └── queries.js         # Call log and transcript database queries
+│   ├── public/
+│   │   └── index.html         # Main dashboard HTML (static assets)
+│   ├── routes/
+│   │   ├── logs.js            # REST endpoints for active call logs and history
+│   │   ├── process.js         # API for pipeline testing and web demo simulations
+│   │   └── voice.js           # Twilio inbound/outbound call webhook endpoints
+│   ├── services/
+│   │   ├── llm.js             # Groq SDK configuration & Hyderabadi Llama rules
+│   │   ├── pipeline.js        # Pipeline orchestrator (STT -> LLM -> TTS)
+│   │   ├── stt.js             # Whisper API connector
+│   │   └── tts.js             # EdgeTTS voice compiler (or ElevenLabs if active)
+│   ├── utils/
+│   │   └── logger.js          # Winston logger instance
+│   ├── views/
+│   │   └── timer.html         # Live active call tracker dashboard view
+│   └── server.js              # Express server and socket/REST routes setup
+├── tests/
+│   └── verify-setup.js        # Environment validation and connectivity checks
+├── .env.example               # Template file for local configurations
+├── package.json               # Package dependencies and run scripts
+├── supabase-schema.sql        # Database tables definition for Supabase SQL Editor
+├── vercel.json                # Vercel platform deploy settings
+└── voice_server.py            # Optional Python XTTS voice clone server
+```
+
+## Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/harishmotamarri/Harish-s-Voice-AI.git
+cd harish-voice-ai
+```
+
+### Install Dependencies
+
 ```bash
 npm install
 ```
 
-### 2. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env with your real keys (see API Keys section below)
-```
+### Database Setup
 
-### 3. Set up Supabase (2 minutes)
-1. Go to [supabase.com](https://supabase.com) → New Project (free tier)
-2. Copy **Project URL** → `SUPABASE_URL` in `.env`
-3. Copy **service_role key** (Settings → API) → `SUPABASE_SERVICE_ROLE_KEY` in `.env`
-4. Go to **SQL Editor** → paste `supabase-schema.sql` → click Run
+1. Create a free PostgreSQL instance on [Supabase](https://supabase.com).
+2. Open the **SQL Editor** in your Supabase project dashboard.
+3. Paste the contents of [supabase-schema.sql](file:///c:/Users/motam/Desktop/FOLDERS/PROJECTS/Harish%20Voice%20AI/harish-voice-ai/supabase-schema.sql) and run the query to initialize the database tables.
 
-### 4. Verify setup
+### Run Pre-flight Checks
+
+Verify that your environmental keys and database are properly configured before starting the application:
+
 ```bash
 node tests/verify-setup.js
 ```
 
-### 5. Start server
+### Run Server
+
 ```bash
+# Development (with nodemon)
 npm run dev
+
+# Production
+npm start
 ```
 
-### 6. Expose to internet (for Twilio webhooks)
-```bash
-# Install ngrok: https://ngrok.com
-ngrok http 3000
-# Copy the https://xxxx.ngrok.io URL → paste as BASE_URL in .env
-```
+## Environment Variables
 
-### 7. Configure Twilio
-1. [Twilio Console](https://console.twilio.com) → Phone Numbers → your number
-2. Voice Configuration → Webhook:
-   - **When a call comes in:** `https://your-ngrok-url.ngrok.io/voice/incoming` (POST)
-   - **Call Status Changes:** `https://your-ngrok-url.ngrok.io/voice/status` (POST)
-3. Save
-
-### 8. Test — call your Twilio number! 📞
-
----
-
-## 🔑 API Keys — Where to Get Them
-
-| Service | Where | Free Tier |
-|---------|-------|-----------|
-| **Twilio** | [console.twilio.com](https://console.twilio.com) | $15 trial credit |
-| **OpenAI** | [platform.openai.com](https://platform.openai.com) | Pay-as-you-go |
-| **Supabase** | [supabase.com](https://supabase.com) | 500MB free forever |
-| **ElevenLabs** | [elevenlabs.io](https://elevenlabs.io) | 10k chars/month free |
-
----
-
-## 📁 Project Structure
-
-```
-harish-voice-ai/
-├── src/
-│   ├── server.js              # Express entry point
-│   ├── db/
-│   │   ├── client.js          # Supabase singleton client
-│   │   ├── init.js            # Schema initialiser
-│   │   └── queries.js         # All DB operations
-│   ├── routes/
-│   │   ├── voice.js           # Twilio webhooks (Step 2)
-│   │   ├── process.js         # Internal test endpoint
-│   │   └── logs.js            # Call log REST API
-│   ├── services/
-│   │   ├── pipeline.js        # STT → LLM → TTS orchestrator
-│   │   ├── stt.js             # Whisper (Step 3)
-│   │   ├── llm.js             # GPT-4o + Harish personality
-│   │   └── tts.js             # ElevenLabs (Step 5)
-│   └── utils/
-│       └── logger.js          # Winston logger
-├── tests/
-│   └── verify-setup.js        # Pre-flight checks
-├── audio/                     # Generated TTS audio files
-├── logs/                      # App logs
-├── supabase-schema.sql        # Paste into Supabase SQL Editor
-└── .env.example
-```
-
----
-
-## 🔗 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Server health check |
-| POST | `/voice/incoming` | Twilio incoming call webhook |
-| POST | `/voice/gather` | Twilio speech result webhook |
-| POST | `/voice/status` | Twilio call status updates |
-| POST | `/process/test` | Test AI pipeline directly |
-| GET | `/logs/calls` | List recent calls |
-| GET | `/logs/calls/:sid` | Full transcript for a call |
-
----
-
-## 🧪 Testing Without a Real Call
+Copy `.env.example` to a new `.env` file and populate it with your API keys:
 
 ```bash
-# Test the AI pipeline directly
-curl -X POST http://localhost:3000/process/test \
-  -H "Content-Type: application/json" \
-  -d '{"callSid":"TEST001","text":"Haa Harish, ela unnav?"}'
+cp .env.example .env
 ```
 
----
+Required variables:
 
-## 💰 Cost Estimate (Monthly)
+```env
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+OPENAI_API_KEY=your_openai_api_key
+GROQ_API_KEY=your_groq_api_key
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+BASE_URL=your_public_ngrok_or_domain_url
+```
 
-| Service | Free Tier | Paid (est.) |
-|---------|-----------|-------------|
-| Supabase | ✅ 500MB free | $25/mo |
-| Twilio | $15 trial | ~$1/100 min |
-| OpenAI GPT-4o | — | ~$0.005/call |
-| ElevenLabs | 10k chars free | $5/mo |
-| **Total** | **~$0** | **~$10/mo** |
+## API Documentation
 
+### Health Check
 
+```http
+GET /health
+```
 
-By Harish Motamarri.
+Response:
+
+```json
+{
+  "status": "ok",
+  "service": "Harish Voice AI",
+  "version": "2.0.0",
+  "db": "supabase",
+  "time": "2026-06-15T12:00:00.000Z"
+}
+```
+
+### Web Trigger Call Simulation
+
+```http
+POST /process/test
+Content-Type: application/json
+
+{
+  "callSid": "TEST_CALL_123",
+  "text": "Haa Harish, ela unnav?"
+}
+```
+
+Response:
+
+```json
+{
+  "replyText": "Haa ra baagunnanu, nuvvu ela unnavu?",
+  "audioUrl": "https://your-domain.com/audio/TEST_CALL_123_1779000000.mp3",
+  "shouldHangup": false
+}
+```
+
+### Call Logs API
+
+```http
+GET /logs/calls
+```
+
+Response:
+
+```json
+[
+  {
+    "id": "CAxxxxxxxxxxxxxxxxxx",
+    "from_number": "+1234567890",
+    "status": "completed",
+    "started_at": "2026-06-15T10:00:00Z",
+    "turn_count": 5
+  }
+]
+```
+
+## Challenges & Learnings
+
+- **Bilingual Tone Control**: Prompting Llama-3.1-8B to reject outputting Telugu Unicode script and instead write phonetically spelled Telugu (Tenglish) in English characters requires precise instruction tuning.
+- **Latency Optimization**: The initial stack utilized ElevenLabs for custom voice replication, but network latency during sequential API calls (STT -> LLM -> TTS) exceeded 3.5 seconds. Re-routing the default TTS channel to Microsoft Edge TTS (`en-IN-NeerjaNeural`) brought the latency down to sub-second levels.
+- **State Management**: Using Supabase to persist transient active call states allowed the application to safely reload and scale without disrupting the real-time live dashboard.
+
+## Future Improvements
+
+- Add native WebSocket-based streaming using Twilio Media Streams to support complete duplex audio.
+- Integrate direct local compilation of the XTTS v2 python model to bypass external API charges completely.
+- Refine the custom Telugu transliteration ruleset to catch complex dialect accents.
+
+## Contributing
+
+Contributions are welcome. Please open an issue or submit a pull request.
+
+## License
+
+MIT License
+
+## Author
+
+**Harish Motamarri**
+- GitHub: [harishmotamarri](https://github.com/harishmotamarri)
+- LinkedIn: [Harish Motamarri](https://linkedin.com/in/harish-motamarri)
